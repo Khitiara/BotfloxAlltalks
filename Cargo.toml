@@ -1,0 +1,8 @@
+[package]
+name = "botflox_alltalks"
+version = "0.1.0"
+authors = ["RoboSky <robotbrainify@github.com>"]
+edition = "2018"
+
+[dependencies]
+serenity = "0.5"
