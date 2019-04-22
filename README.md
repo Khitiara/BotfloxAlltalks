@@ -1,0 +1,2 @@
+# BotfloxAlltalks
+lightweight ffxiv bot
