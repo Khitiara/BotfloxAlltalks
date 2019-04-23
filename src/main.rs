@@ -36,8 +36,8 @@ command!(invite(_context, msg) {
     let _ = msg.channel_id.say("https://discordapp.com/api/oauth2/authorize?client_id=570017324460015616&permissions=18496&scope=bot");
 });
 
-fn get_portrait(client: &reqwest::Client, id: usize) -> Result<String, Box<std::error::Error>> {
+fn get_character(client: &reqwest::Client, id: usize) -> Result<model::Character, Box<std::error::Error>> {
     let resp: model::LodestoneIdResult = client.get(&format!("https://xivapi.com/character/{}", id))
         .send()?.json()?;
-    Ok(resp.character.portrait)
+    Ok(resp.character)
 }
