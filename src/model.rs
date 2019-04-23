@@ -41,7 +41,8 @@ struct Character {
     #[serde(rename = "FreeCompanyId")]
     fc: usize,
     title: usize,
-    town: Town
+    town: Town,
+    nameday: String
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
