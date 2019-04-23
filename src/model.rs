@@ -12,11 +12,19 @@ struct RawCharacter {
 }
 
 #[derive(Deserialize_repr, PartialEq, Debug)]
-#[repr(u8)]
+#[repr(usize)]
 enum Gender {
     Other = 0,
     Male = 1,
     Female = 2,
+}
+
+#[derive(Deserialize_repr, PartialEq, Debug)]
+#[repr(usize)]
+enum Town {
+    Limsa = 1,
+    Gridania = 2,
+    Uldah = 3
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -33,5 +41,11 @@ struct Character {
     #[serde(rename = "FreeCompanyId")]
     fc: u32,
     title: u16,
-    town: u8
+    town: Town
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+struct LodestoneIdResult {
+    character: Character
 }
