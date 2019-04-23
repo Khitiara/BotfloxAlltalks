@@ -27,13 +27,30 @@ enum Town {
     Uldah = 3
 }
 
+#[derive(Deserialize_repr, PartialEq, Debug)]
+#[repr(usize)]
+enum GuardianDiety {
+    Halone = 1,
+    Menphina = 2,
+    Thaliak = 3,
+    Nymeia = 4,
+    Llymlaen = 5,
+    Oschon = 6,
+    Byregot = 7,
+    Rhalgr = 8,
+    Azeyma = 9,
+    Naldthal = 10,
+    Nophica = 11,
+    Althyk = 12
+}
+
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
 struct Character {
     avatar: String,
     #[serde(rename = "ID")]
     id: usize,
-    guardian_diety: usize,
+    guardian_diety: GuardianDiety,
     gender: Gender,
     portrait: String,
     race: u8,
