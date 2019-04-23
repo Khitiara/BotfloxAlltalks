@@ -6,7 +6,7 @@ use serde_repr::*;
 struct RawCharacter {
     avatar: String,
     #[serde(alias = "ID")]
-    id: u32,
+    id: usize,
     name: String,
     server: String
 }
@@ -32,15 +32,15 @@ enum Town {
 struct Character {
     avatar: String,
     #[serde(rename = "ID")]
-    id: u32,
-    guardian_diety: u8,
+    id: usize,
+    guardian_diety: usize,
     gender: Gender,
     portrait: String,
     race: u8,
     server: String,
     #[serde(rename = "FreeCompanyId")]
-    fc: u32,
-    title: u16,
+    fc: usize,
+    title: usize,
     town: Town
 }
 
