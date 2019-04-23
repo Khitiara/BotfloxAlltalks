@@ -1,10 +1,12 @@
 #[macro_use] extern crate serenity;
 #[macro_use] extern crate std;
+extern crate serde;
+
+mod model;
 
 use serenity::client::Client;
 use serenity::prelude::EventHandler;
 use serenity::framework::standard::StandardFramework;
-use std::env;
 
 struct Handler;
 
