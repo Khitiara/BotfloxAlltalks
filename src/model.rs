@@ -3,17 +3,17 @@ use serde_repr::*;
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct RawCharacter {
-    avatar: String,
+pub struct RawCharacter {
+    pub avatar: String,
     #[serde(alias = "ID")]
-    id: usize,
-    name: String,
-    server: String
+    pub id: usize,
+    pub name: String,
+    pub server: String
 }
 
 #[derive(Deserialize_repr, PartialEq, Debug)]
 #[repr(usize)]
-enum Gender {
+pub enum Gender {
     Other = 0,
     Male = 1,
     Female = 2,
@@ -21,7 +21,7 @@ enum Gender {
 
 #[derive(Deserialize_repr, PartialEq, Debug)]
 #[repr(usize)]
-enum Town {
+pub enum Town {
     Limsa = 1,
     Gridania = 2,
     Uldah = 3
@@ -29,7 +29,7 @@ enum Town {
 
 #[derive(Deserialize_repr, PartialEq, Debug)]
 #[repr(usize)]
-enum GuardianDiety {
+pub enum GuardianDiety {
     Halone = 1,
     Menphina = 2,
     Thaliak = 3,
@@ -46,24 +46,24 @@ enum GuardianDiety {
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct Character {
-    avatar: String,
+pub struct Character {
+    pub avatar: String,
     #[serde(rename = "ID")]
-    id: usize,
-    guardian_diety: GuardianDiety,
-    gender: Gender,
-    portrait: String,
-    race: u8,
-    server: String,
+    pub id: usize,
+    pub guardian_diety: GuardianDiety,
+    pub gender: Gender,
+    pub portrait: String,
+    pub race: u8,
+    pub server: String,
     #[serde(rename = "FreeCompanyId")]
-    fc: usize,
-    title: usize,
-    town: Town,
-    nameday: String
+    pub fc: usize,
+    pub title: usize,
+    pub town: Town,
+    pub nameday: String
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct LodestoneIdResult {
-    character: Character
+pub struct LodestoneIdResult {
+    pub character: Character
 }
