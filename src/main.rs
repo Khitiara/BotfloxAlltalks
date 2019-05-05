@@ -1,7 +1,10 @@
-#[macro_use] extern crate serenity;
-#[macro_use] extern crate std;
+#[macro_use]
+extern crate serenity;
+#[macro_use]
+extern crate std;
 extern crate serde;
 extern crate reqwest;
+extern crate typemap;
 
 mod model;
 
@@ -13,6 +16,12 @@ use std::env;
 
 struct Handler;
 
+struct ReqwestClient;
+
+impl typemap::Key for ReqwestClient {
+    type Value = reqwest::Client;
+}
+
 impl EventHandler for Handler {}
 
 fn main() {
@@ -22,7 +31,13 @@ fn main() {
     client.with_framework(StandardFramework::new()
         .configure(|c| c.prefix("!")) // set the bot's prefix to "~"
         .cmd("ping", ping)
-        .cmd("invite", invite));
+        .cmd("invite", invite)
+        .cmd("byid", byid));
+    let _ = {
+        let mut data = client.data.lock();
+        let req = reqwest::Client::new();
+        data.insert::<ReqwestClient>(req);
+    };
 
     // start listening for events by starting a single shard
     if let Err(why) = client.start() {
@@ -36,6 +51,15 @@ command!(ping(_context, msg) {
 
 command!(invite(_context, msg) {
     let _ = msg.channel_id.say("https://discordapp.com/api/oauth2/authorize?client_id=570017324460015616&permissions=18496&scope=bot");
+});
+
+command!(byid(ctx, msg, args) {
+    let _ = msg.channel_id.broadcast_typing()?;
+    let id = args.single::<usize>()?;
+    let mut data = ctx.data.lock();
+    let req = data.get::<ReqwestClient>().expect("client");
+    let char = get_character(req, id).unwrap()
+    let _ = msg.channel_id.say(format!("Found {} @ {}", char.name, char.server));
 });
 
 fn get_character(client: &reqwest::Client, id: usize) -> Result<model::Character, Box<std::error::Error>> {

@@ -29,7 +29,7 @@ pub enum Town {
 
 #[derive(Deserialize_repr, PartialEq, Debug)]
 #[repr(usize)]
-pub enum GuardianDiety {
+pub enum GuardianDeity {
     Halone = 1,
     Menphina = 2,
     Thaliak = 3,
@@ -50,16 +50,17 @@ pub struct Character {
     pub avatar: String,
     #[serde(rename = "ID")]
     pub id: usize,
-    pub guardian_diety: GuardianDiety,
+    pub guardian_deity: GuardianDeity,
     pub gender: Gender,
     pub portrait: String,
     pub race: u8,
     pub server: String,
     #[serde(rename = "FreeCompanyId")]
-    pub fc: usize,
+    pub fc: String,
     pub title: usize,
     pub town: Town,
-    pub nameday: String
+    pub nameday: String,
+    pub name: String,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
