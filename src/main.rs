@@ -104,9 +104,17 @@ command!(whois(ctx, msg, args) {
     let mut data = ctx.data.lock();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
+    let content = if char.title.name.is_empty() {
+        format!("{name}, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name=char.name,
+            lvl=char.active_class_job.level, gender=char.gender.to_string().to_lowercase(),
+            race=char.race.name, tribe=char.tribe.name, job=char.active_class_job.job.name, server=char.server)
+
+    } else {
+        format!("{name} <{title}>, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name=char.name,
+            title=char.title.name, lvl=char.active_class_job.level, gender=char.gender.to_string().to_lowercase(),
+            race=char.race.name, tribe=char.tribe.name, job=char.active_class_job.job.name, server=char.server)
+    };
     let _ = msg.channel_id.send_message(|m| m
-        .content(format!("{} <{}>, Level {} {} {} ({}) {} of {}", char.name, char.title.name,
-            char.active_class_job.level, char.gender.to_string().to_lowercase(),
-            char.race.name, char.tribe.name, char.active_class_job.job.name, char.server))
+        .content(content)
         .embed(|e| e.image(char.portrait)));
 });
