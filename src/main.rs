@@ -96,13 +96,14 @@ command!(byid(ctx, msg, args) {
 
 command!(whois(ctx, msg, args) {
     let _ = msg.channel_id.broadcast_typing()?;
-    let name = args.single_quoted::<String>()?;
-    let server = args.single::<String>().ok();
+    let arg: Vec<&str> = args.full().split('@').collect();
+    let name = arg[0].trim().to_string();
+    let server = arg.get(1).map(|s| s.trim().to_string());
     let mut data = ctx.data.lock();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
     let _ = msg.channel_id.send_message(|m| m
         .content(format!("{}, {} {} of {}", char.name, char.gender.to_string().to_lowercase(),
-            char.race.to_string(), char.town.to_string()))
+            char.race.to_string(), char.server))
         .embed(|e| e.image(char.portrait)));
 });
