@@ -49,7 +49,8 @@ impl EventHandler for Handler {
 
 fn main() {
     // Login with a bot token from the environment
-    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"), Handler)
+    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"),
+                                 Handler)
         .expect("Error creating client");
     client.with_framework(StandardFramework::new()
         .configure(|c| c.prefix("!"))
@@ -107,12 +108,14 @@ command!(whois(ctx, msg, args) {
     let content = if char.title.name.is_empty() {
         format!("{name}, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name=char.name,
             lvl=char.active_class_job.level, gender=char.gender.to_string().to_lowercase(),
-            race=char.race.name, tribe=char.tribe.name, job=char.active_class_job.job.name, server=char.server)
+            race=char.race.name, tribe=char.tribe.name, job=char.active_class_job.job.name,
+            server=char.server)
 
     } else {
-        format!("{name} <{title}>, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name=char.name,
-            title=char.title.name, lvl=char.active_class_job.level, gender=char.gender.to_string().to_lowercase(),
-            race=char.race.name, tribe=char.tribe.name, job=char.active_class_job.job.name, server=char.server)
+        format!("{name} <{title}>, Level {lvl} {gender} {race} ({tribe}) {job} of {server}",
+            name=char.name, title=char.title.name, lvl=char.active_class_job.level,
+            gender=char.gender.to_string().to_lowercase(), race=char.race.name,
+            tribe=char.tribe.name, job=char.active_class_job.job.name, server=char.server)
     };
     let _ = msg.channel_id.send_message(|m| m
         .content(content)
