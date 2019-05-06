@@ -11,7 +11,7 @@ pub struct RawCharacter {
     pub server: String
 }
 
-#[derive(Deserialize_repr, PartialEq, Debug)]
+#[derive(Deserialize_repr, PartialEq, Debug, Display)]
 #[repr(usize)]
 pub enum Gender {
     Other = 0,
@@ -19,15 +19,30 @@ pub enum Gender {
     Female = 2,
 }
 
-#[derive(Deserialize_repr, PartialEq, Debug)]
+#[derive(Deserialize_repr, PartialEq, Debug, Display)]
 #[repr(usize)]
 pub enum Town {
+    #[strum(to_string="Limsa Lominsa")]
     Limsa = 1,
     Gridania = 2,
+    #[strum(to_string="Ul'dah")]
     Uldah = 3
 }
 
-#[derive(Deserialize_repr, PartialEq, Debug)]
+#[derive(Deserialize_repr, PartialEq, Debug, Display)]
+#[repr(usize)]
+pub enum Race {
+    Hyur = 1,
+    Elezen = 2,
+    Lalafell = 3,
+    #[strum(to_string="Mi'qote")]
+    Miqote = 4,
+    Roegadyn = 5,
+    #[strum(to_string="Au Ra")]
+    Aura = 6,
+}
+
+#[derive(Deserialize_repr, PartialEq, Debug, Display)]
 #[repr(usize)]
 pub enum GuardianDeity {
     Halone = 1,
@@ -53,7 +68,7 @@ pub struct Character {
     pub guardian_deity: GuardianDeity,
     pub gender: Gender,
     pub portrait: String,
-    pub race: u8,
+    pub race: Race,
     pub server: String,
     #[serde(rename = "FreeCompanyId")]
     pub fc: String,
@@ -67,4 +82,17 @@ pub struct Character {
 #[serde(rename_all = "PascalCase")]
 pub struct LodestoneIdResult {
     pub character: Character
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct Pagination {
+    pub results_total: usize
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct LodestoneSearchResult {
+    pub pagination: Pagination,
+    pub results: Vec<RawCharacter>
 }
