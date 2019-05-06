@@ -16,7 +16,7 @@ use rest::*;
 
 use serenity::client::{Client, Context};
 use serenity::prelude::EventHandler;
-use serenity::framework::standard::StandardFramework;
+use serenity::framework::standard::{StandardFramework, CommandError};
 
 use std::env;
 use serenity::model::gateway::{Game, Ready};
@@ -54,10 +54,12 @@ fn main() {
     client.with_framework(StandardFramework::new()
         .configure(|c| c.prefix("!"))
         .after(
-            |_ctx, _msg, cmd_name, error| {
+            |_ctx, msg, cmd_name, error| {
                 //  Print out an error if it happened
                 if let Err(why) = error {
-                    println!("Error in {}: {:?}", cmd_name, why);
+                    let CommandError(s) = why;
+                    let _ = msg.channel_id.say(s.clone());
+                    println!("Error in {}: {:?}", cmd_name, s);
                 }
             })
         .cmd("ping", ping)

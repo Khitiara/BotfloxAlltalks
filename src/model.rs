@@ -35,7 +35,7 @@ pub enum Race {
     Hyur = 1,
     Elezen = 2,
     Lalafell = 3,
-    #[strum(to_string="Mi'qote")]
+    #[strum(to_string="Miqo'te")]
     Miqote = 4,
     Roegadyn = 5,
     #[strum(to_string="Au Ra")]
