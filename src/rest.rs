@@ -2,7 +2,7 @@ use crate::model::*;
 use serenity::framework::standard::CommandError;
 
 pub fn character_by_id(client: &reqwest::Client, id: usize) -> Result<Character, CommandError> {
-    let resp: LodestoneIdResult = client.get(&format!("https://xivapi.com/character/{}", id))
+    let resp: LodestoneIdResult = client.get(&format!("https://xivapi.com/character/{}?extended=true", id))
         .send()?.json()?;
     Ok(resp.character)
 }

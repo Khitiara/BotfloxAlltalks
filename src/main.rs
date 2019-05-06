@@ -105,7 +105,8 @@ command!(whois(ctx, msg, args) {
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
     let _ = msg.channel_id.send_message(|m| m
-        .content(format!("{}, {} {} of {}", char.name, char.gender.to_string().to_lowercase(),
-            char.race.to_string(), char.server))
+        .content(format!("{} <{}>, Level {} {} {} ({}) {} of {}", char.name, char.title.name,
+            char.active_class_job.level, char.gender.to_string().to_lowercase(),
+            char.race.name, char.tribe.name, char.active_class_job.job.name, char.server))
         .embed(|e| e.image(char.portrait)));
 });
