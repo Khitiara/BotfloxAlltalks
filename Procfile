@@ -1,1 +1,1 @@
-worker: ./target/release/botflox-alltalks
+worker: ./target/release/botflox_alltalks
