@@ -13,4 +13,4 @@ RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /v
 
 COPY --from=build /build-out/botflox_alltalks /
 
-CMD /botflox_alltalks
+ENTRYPOINT /botflox_alltalks
