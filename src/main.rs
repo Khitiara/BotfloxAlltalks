@@ -11,6 +11,7 @@ extern crate strum_macros;
 
 mod model;
 mod rest;
+mod store;
 
 use rest::*;
 
@@ -21,6 +22,10 @@ use serenity::framework::standard::{StandardFramework, CommandError};
 use std::env;
 use serenity::model::gateway::{Game, Ready};
 use serenity::model::Permissions;
+
+use std::error::Error;
+use std::fs::File;
+use std::path::Path;
 
 struct Handler;
 
@@ -36,6 +41,25 @@ impl typemap::Key for InviteUrl {
     type Value = String;
 }
 
+struct Storage;
+
+impl typemap::Key for Storage {
+    type Value = store::BotfloxStorage;
+}
+
+fn load_storage() -> Result<store::BotfloxStorage, Box<Error>> {
+    let path = Path::new("botflox.yml");
+    if path.exists() {
+        Ok(serde_yaml::from_reader(File::open(path)?)?)
+    } else {
+        Ok(store::BotfloxStorage::new())
+    }
+}
+
+fn save_storage(storage: &store::BotfloxStorage) -> Result<(), Box<Error>> {
+    Ok(serde_yaml::to_writer(File::create("botflox.yml")?, storage)?)
+}
+
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, event: Ready) {
         ctx.set_game(Game::playing(" with Idyllshire Cityfriends!"));
@@ -44,6 +68,7 @@ impl EventHandler for Handler {
             | Permissions::ADD_REACTIONS | Permissions::ATTACH_FILES | Permissions::EMBED_LINKS)
             .unwrap();
         data.insert::<InviteUrl>(url);
+        data.insert::<Storage>(load_storage().unwrap());
     }
 }
 
@@ -66,7 +91,8 @@ fn main() {
         .cmd("ping", ping)
         .cmd("invite", invite)
         .cmd("byid", byid)
-        .cmd("byname", whois));
+        .cmd("byname", whois)
+        .cmd("save", save));
     let _ = {
         let mut data = client.data.lock();
         let req = reqwest::Client::new();
@@ -77,6 +103,13 @@ fn main() {
     if let Err(why) = client.start() {
         println!("An error occurred while running the client: {:?}", why);
     }
+
+    let _ = {
+        let data = client.data.lock();
+        let store = data.get::<Storage>().expect("Storage");
+        println!("Saving storage");
+        save_storage(store).unwrap();
+    };
 }
 
 command!(ping(_context, msg) {
@@ -120,4 +153,11 @@ command!(whois(ctx, msg, args) {
     let _ = msg.channel_id.send_message(|m| m
         .content(content)
         .embed(|e| e.image(char.portrait)));
+});
+
+command!(save(ctx, _msg) {
+    let data = ctx.data.lock();
+    let store = data.get::<Storage>().expect("Storage");
+    println!("Saving storage");
+    save_storage(store).unwrap();
 });
