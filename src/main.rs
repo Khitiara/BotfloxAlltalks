@@ -117,7 +117,7 @@ group!({
 
 #[command]
 #[description = "Ping the bot, for testing"]
-#[usage("!invite")]
+#[usage("!ping")]
 fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
     let _ = msg.channel_id.say(&ctx.http, "Pong!")?;
     Ok(())
