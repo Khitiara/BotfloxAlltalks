@@ -1,31 +1,29 @@
-#[macro_use]
+extern crate reqwest;
+extern crate serde;
 extern crate serenity;
 #[macro_use]
 extern crate std;
-extern crate serde;
-extern crate reqwest;
-extern crate typemap;
 extern crate strum;
 #[macro_use]
 extern crate strum_macros;
+extern crate typemap;
+
+use serenity::client::{Client, Context};
+use serenity::framework::standard::{Args, CommandError, CommandResult, macros::{command, group}, StandardFramework};
+use serenity::model::channel::Message;
+use serenity::model::gateway::{Activity, Ready};
+use serenity::model::Permissions;
+use serenity::prelude::EventHandler;
+
+use rest::*;
+use std::env;
+use std::error::Error;
+use std::fs::File;
+use std::path::Path;
 
 mod model;
 mod rest;
 mod store;
-
-use rest::*;
-
-use serenity::client::{Client, Context};
-use serenity::prelude::EventHandler;
-use serenity::framework::standard::{StandardFramework, CommandError};
-
-use std::env;
-use serenity::model::gateway::{Game, Ready};
-use serenity::model::Permissions;
-
-use std::error::Error;
-use std::fs::File;
-use std::path::Path;
 
 struct Handler;
 
@@ -62,9 +60,9 @@ fn save_storage(storage: &store::BotfloxStorage) -> Result<(), Box<Error>> {
 
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, event: Ready) {
-        ctx.set_game(Game::playing(" with Idyllshire Cityfriends!"));
-        let mut data = ctx.data.lock();
-        let url = event.user.invite_url(Permissions::SEND_MESSAGES
+        ctx.set_activity(Activity::playing(" with Idyllshire Cityfriends!"));
+        let mut data = ctx.data.write();
+        let url = event.user.invite_url(&ctx.http, Permissions::SEND_MESSAGES
             | Permissions::ADD_REACTIONS | Permissions::ATTACH_FILES | Permissions::EMBED_LINKS)
             .unwrap();
         data.insert::<InviteUrl>(url);
@@ -74,28 +72,25 @@ impl EventHandler for Handler {
 
 fn main() {
     // Login with a bot token from the environment
-    let mut client = Client::new(&env::var("DISCORD_TOKEN").expect("token"),
+    let token = env::var("DISCORD_TOKEN").expect("token");
+    let mut client = Client::new(&token,
                                  Handler)
         .expect("Error creating client");
+    let req = reqwest::Client::new();
     client.with_framework(StandardFramework::new()
         .configure(|c| c.prefix("!"))
         .after(
-            |_ctx, msg, cmd_name, error| {
+            |ctx, msg, cmd_name, error| {
                 //  Print out an error if it happened
                 if let Err(why) = error {
                     let CommandError(s) = why;
-                    let _ = msg.channel_id.say(s.clone());
+                    let _ = msg.channel_id.say(&ctx.http, s.clone());
                     println!("Error in {}: {:?}", cmd_name, s);
                 }
             })
-        .cmd("ping", ping)
-        .cmd("invite", invite)
-        .cmd("byid", byid)
-        .cmd("byname", whois)
-        .cmd("save", save));
+        .group(&GENERAL_GROUP));
     let _ = {
-        let mut data = client.data.lock();
-        let req = reqwest::Client::new();
+        let mut data = client.data.write();
         data.insert::<ReqwestClient>(req);
     };
 
@@ -105,59 +100,84 @@ fn main() {
     }
 
     let _ = {
-        let data = client.data.lock();
+        let data = client.data.read();
         let store = data.get::<Storage>().expect("Storage");
         println!("Saving storage");
         save_storage(store).unwrap();
     };
 }
 
-command!(ping(_context, msg) {
-    let _ = msg.channel_id.say("Pong!");
+group!({
+    name: "general",
+    options: {},
+    commands: [ping, invite, byid, byname, save]
 });
 
-command!(invite(ctx, msg) {
-    let mut data = ctx.data.lock();
-    let _ = msg.channel_id.say(data.get::<InviteUrl>().expect("invite url"));
-});
+#[command]
+#[description = "Ping the bot, for testing"]
+#[usage("!invite")]
+fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let _ = msg.channel_id.say(&ctx.http, "Pong!")?;
+    Ok(())
+}
 
-command!(byid(ctx, msg, args) {
-    let _ = msg.channel_id.broadcast_typing()?;
+#[command]
+#[description = "Get the invite link"]
+#[usage("!invite")]
+fn invite(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let data = ctx.data.read();
+    let _ = msg.channel_id.say(&ctx.http, data.get::<InviteUrl>().expect("invite url"))?;
+    Ok(())
+}
+
+#[command]
+#[description = "Get a character by id"]
+#[usage("!byid")]
+fn byid(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let id = args.single::<usize>()?;
-    let mut data = ctx.data.lock();
+    let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
+    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
     let char = character_by_id(req, id)?;
-    let _ = msg.channel_id.say(format!("Found {} @ {}", char.name, char.server));
-});
+    let _ = msg.channel_id.say(&ctx.http, format!("Found {} @ {}", char.name, char.server))?;
+    Ok(())
+}
 
-command!(whois(ctx, msg, args) {
-    let _ = msg.channel_id.broadcast_typing()?;
-    let arg: Vec<&str> = args.full().split('@').collect();
+#[command]
+#[description = "Get a character by name"]
+#[usage("!byname")]
+fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
+    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim().to_string();
     let server = arg.get(1).map(|s| s.trim().to_string());
-    let mut data = ctx.data.lock();
+    let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
     let content = if char.title.name.is_empty() {
-        format!("{name}, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name=char.name,
-            lvl=char.active_class_job.level, gender=char.gender.to_string().to_lowercase(),
-            race=char.race.name, tribe=char.tribe.name, job=char.active_class_job.job.name,
-            server=char.server)
-
+        format!("{name}, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name = char.name,
+                lvl = char.active_class_job.level, gender = char.gender.to_string().to_lowercase(),
+                race = char.race.name, tribe = char.tribe.name, job = char.active_class_job.job.name,
+                server = char.server)
     } else {
         format!("{name} <{title}>, Level {lvl} {gender} {race} ({tribe}) {job} of {server}",
-            name=char.name, title=char.title.name, lvl=char.active_class_job.level,
-            gender=char.gender.to_string().to_lowercase(), race=char.race.name,
-            tribe=char.tribe.name, job=char.active_class_job.job.name, server=char.server)
+                name = char.name, title = char.title.name, lvl = char.active_class_job.level,
+                gender = char.gender.to_string().to_lowercase(), race = char.race.name,
+                tribe = char.tribe.name, job = char.active_class_job.job.name, server = char.server)
     };
-    let _ = msg.channel_id.send_message(|m| m
+    let _ = msg.channel_id.send_message(&ctx.http, |m| m
         .content(content)
-        .embed(|e| e.image(char.portrait)));
-});
+        .embed(|e| e.image(char.portrait)))?;
+    Ok(())
+}
 
-command!(save(ctx, _msg) {
-    let data = ctx.data.lock();
+#[command]
+#[description = "Save character-user linkage"]
+#[usage("!save")]
+fn save(ctx: &mut Context, _msg: &Message) -> CommandResult {
+    let data = ctx.data.read();
     let store = data.get::<Storage>().expect("Storage");
     println!("Saving storage");
-    save_storage(store).unwrap();
-});
+    save_storage(store)?;
+    Ok(())
+}
