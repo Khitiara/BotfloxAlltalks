@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use serenity::model::id::UserId;
 use serde::{Serialize, Deserialize};
 
-pub type CharacterId = usize;
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CharacterId(pub usize);
+
 pub type CharacterListings = HashMap<UserId, CharacterId>;
 
 #[derive(Serialize, Deserialize, Debug)]

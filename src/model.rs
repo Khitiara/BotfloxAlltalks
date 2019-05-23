@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_repr::*;
 
-#[derive(Deserialize, PartialEq, Debug)]
+#[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawCharacter {
     pub avatar: String,

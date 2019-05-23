@@ -31,6 +31,11 @@ pub fn search_character(client: &reqwest::Client, name: String, server: Option<S
 }
 
 pub fn character_by_name(client: &reqwest::Client, name: String, server: Option<String>) -> Result<Character, CommandError> {
+    let raw_char = id_by_name(client, name, server)?;
+    character_by_id(client, raw_char.id)
+}
+
+pub fn id_by_name(client: &reqwest::Client, name: String, server: Option<String>) -> Result<RawCharacter, CommandError> {
     let search = search_character(client, name, server)?;
     if search.pagination.results_total > 1 {
         Err(CommandError(format!("Search not specific enough, found {} matching characters", search.pagination.results_total)))
@@ -38,6 +43,6 @@ pub fn character_by_name(client: &reqwest::Client, name: String, server: Option<
         Err(CommandError("No matching character found, try again!".to_string()))
     } else {
         let raw_char = search.results.first().expect("character");
-        character_by_id(client, raw_char.id)
+        Ok(raw_char.clone())
     }
 }

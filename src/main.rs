@@ -23,6 +23,9 @@ use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 
+use crate::model::Character;
+use crate::store::CharacterId;
+
 mod model;
 mod rest;
 mod store;
@@ -112,7 +115,7 @@ fn main() {
 group!({
     name: "general",
     options: {},
-    commands: [ping, invite, byid, byname, portrait, save]
+    commands: [ping, invite, byid, byname, portrait, iam, whoami, selfportrait]
 });
 
 #[command]
@@ -153,7 +156,10 @@ fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
     let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim().to_string();
     let server = arg.get(1).map(|s| s.trim().to_string());
-    display_character(ctx, msg.channel_id, name, server, false)
+    let data = ctx.data.read();
+    let req = data.get::<ReqwestClient>().expect("client");
+    let char = character_by_name(req, name, server)?;
+    display_character(ctx, msg.channel_id, char, false)
 }
 
 #[command]
@@ -164,13 +170,13 @@ fn portrait(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
     let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim().to_string();
     let server = arg.get(1).map(|s| s.trim().to_string());
-    display_character(ctx, msg.channel_id, name, server, true)
-}
-
-fn display_character(ctx: &mut Context, chan: ChannelId, name: String, server: Option<String>, portrait: bool) -> CommandResult {
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
+    display_character(ctx, msg.channel_id, char, true)
+}
+
+fn display_character(ctx: &Context, chan: ChannelId, char: Character, portrait: bool) -> CommandResult {
     let _ = chan.send_message(&ctx.http, |m| m
         .embed(|e: &mut CreateEmbed| {
             if portrait {
@@ -198,4 +204,62 @@ fn save(ctx: &mut Context, _msg: &Message) -> CommandResult {
     println!("Saving storage");
     save_storage(store)?;
     Ok(())
+}
+
+#[command]
+#[description = "Save character-user linkage"]
+#[usage("!iam")]
+fn iam(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
+    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    let arg: Vec<&str> = args.message().split('@').collect();
+    let name = arg[0].trim().to_string();
+    let server = arg.get(1).map(|s| s.trim().to_string());
+    let mut data = ctx.data.write();
+    let req = data.get::<ReqwestClient>().expect("client");
+    let char = id_by_name(req, name, server)?;
+    let store = data.get_mut::<Storage>().expect("Storage");
+    store.listings.insert(msg.author.id, CharacterId(char.id));
+    save_storage(store)?;
+    msg.reply(ctx, format!("you are now known to be {}", char.name).as_str())?;
+    Ok(())
+}
+
+#[command]
+#[description = "Get your character"]
+#[usage("!whoami")]
+fn whoami(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    let data = ctx.data.read();
+    let req = data.get::<ReqwestClient>().expect("client");
+    let store = data.get::<Storage>().expect("Storage");
+    match store.listings.get(&msg.author.id) {
+        Some(id) => {
+            let char = character_by_id(req, id.0)?;
+            display_character(ctx, msg.channel_id, char, false)
+        }
+        None => {
+            msg.reply(ctx, "You are not known to be an adventurer.")?;
+            Ok(())
+        }
+    }
+}
+
+#[command]
+#[description = "Get your character"]
+#[usage("!selfportrait")]
+fn selfportrait(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    let data = ctx.data.read();
+    let req = data.get::<ReqwestClient>().expect("client");
+    let store = data.get::<Storage>().expect("Storage");
+    match store.listings.get(&msg.author.id) {
+        Some(id) => {
+            let char = character_by_id(req, id.0)?;
+            display_character(ctx, msg.channel_id, char, true)
+        }
+        None => {
+            msg.reply(ctx, "You are not known to be an adventurer.")?;
+            Ok(())
+        }
+    }
 }
