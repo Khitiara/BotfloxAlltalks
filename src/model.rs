@@ -48,17 +48,19 @@ pub struct Character {
     pub race: WithIdName,
     pub server: String,
     #[serde(rename = "FreeCompanyId")]
-    pub fc: String,
+    pub fc_id: Option<String>,
     pub title: WithIdName,
     pub town: WithIdName,
     pub tribe: WithIdName,
     pub nameday: String,
     pub name: String,
+    #[serde(skip_deserializing)]
+    pub fc: FreeCompany
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
-pub struct LodestoneIdResult {
+pub struct LodestoneCharacterIdResult {
     pub character: Character
 }
 
@@ -73,4 +75,29 @@ pub struct Pagination {
 pub struct LodestoneSearchResult {
     pub pagination: Pagination,
     pub results: Vec<RawCharacter>,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct FreeCompany {
+    pub name: String,
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub tag: String
+}
+
+impl Default for FreeCompany {
+    fn default() -> Self {
+        FreeCompany {
+            name: "".to_string(),
+            id: "".to_string(),
+            tag: "".to_string()
+        }
+    }
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct LodestoneFCIdResult {
+    pub free_company: FreeCompany
 }

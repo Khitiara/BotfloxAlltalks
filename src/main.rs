@@ -8,10 +8,12 @@ extern crate strum;
 extern crate strum_macros;
 extern crate typemap;
 
+use serenity::builder::CreateEmbed;
 use serenity::client::{Client, Context};
 use serenity::framework::standard::{Args, CommandError, CommandResult, macros::{command, group}, StandardFramework};
 use serenity::model::channel::Message;
 use serenity::model::gateway::{Activity, Ready};
+use serenity::model::id::ChannelId;
 use serenity::model::Permissions;
 use serenity::prelude::EventHandler;
 
@@ -85,7 +87,7 @@ fn main() {
                 if let Err(why) = error {
                     let CommandError(s) = why;
                     let _ = msg.channel_id.say(&ctx.http, s.clone());
-                    println!("Error in {}: {:?}", cmd_name, s);
+                    eprintln!("Error in {}: {:?}", cmd_name, s);
                 }
             })
         .group(&GENERAL_GROUP));
@@ -96,7 +98,7 @@ fn main() {
 
     // start listening for events by starting a single shard
     if let Err(why) = client.start() {
-        println!("An error occurred while running the client: {:?}", why);
+        eprintln!("An error occurred while running the client: {:?}", why);
     }
 
     let _ = {
@@ -110,7 +112,7 @@ fn main() {
 group!({
     name: "general",
     options: {},
-    commands: [ping, invite, byid, byname, save]
+    commands: [ping, invite, byid, byname, portrait, save]
 });
 
 #[command]
@@ -151,23 +153,39 @@ fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
     let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim().to_string();
     let server = arg.get(1).map(|s| s.trim().to_string());
+    display_character(ctx, msg.channel_id, name, server, false)
+}
+
+#[command]
+#[description = "Get a character by name with portrait"]
+#[usage("!portrait")]
+fn portrait(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
+    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    let arg: Vec<&str> = args.message().split('@').collect();
+    let name = arg[0].trim().to_string();
+    let server = arg.get(1).map(|s| s.trim().to_string());
+    display_character(ctx, msg.channel_id, name, server, true)
+}
+
+fn display_character(ctx: &mut Context, chan: ChannelId, name: String, server: Option<String>, portrait: bool) -> CommandResult {
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
-    let content = if char.title.name.is_empty() {
-        format!("{name}, Level {lvl} {gender} {race} ({tribe}) {job} of {server}", name = char.name,
-                lvl = char.active_class_job.level, gender = char.gender.to_string().to_lowercase(),
-                race = char.race.name, tribe = char.tribe.name, job = char.active_class_job.job.name,
-                server = char.server)
-    } else {
-        format!("{name} <{title}>, Level {lvl} {gender} {race} ({tribe}) {job} of {server}",
-                name = char.name, title = char.title.name, lvl = char.active_class_job.level,
-                gender = char.gender.to_string().to_lowercase(), race = char.race.name,
-                tribe = char.tribe.name, job = char.active_class_job.job.name, server = char.server)
-    };
-    let _ = msg.channel_id.send_message(&ctx.http, |m| m
-        .content(content)
-        .embed(|e| e.image(char.portrait)))?;
+    let _ = chan.send_message(&ctx.http, |m| m
+        .embed(|e: &mut CreateEmbed| {
+            if portrait {
+                e.image(char.portrait);
+            } else {
+                e.thumbnail(char.avatar);
+            }
+            e.title(format!("{} 🌸 {}{}", char.name, char.server, if !char.title.name.is_empty() { format!(" <{}>", char.title.name) } else { "".to_string() }))
+                .field("Job", format!("Level {} {}", char.active_class_job.level, char.active_class_job.job.name), portrait)
+                .field("Race", format!("{} {} ({})", char.gender.to_string(), char.race.name, char.tribe.name), portrait);
+            if char.fc_id.is_some() {
+                e.field("Free Company", char.fc.name, portrait);
+            }
+            e
+        }))?;
     Ok(())
 }
 

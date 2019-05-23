@@ -1,16 +1,32 @@
-use crate::model::*;
 use serenity::framework::standard::CommandError;
 
+use crate::model::*;
+
 pub fn character_by_id(client: &reqwest::Client, id: usize) -> Result<Character, CommandError> {
-    let resp: LodestoneIdResult = client.get(&format!("https://xivapi.com/character/{}?extended=true", id))
+    let url = format!("https://xivapi.com/character/{}?extended=true", id);
+    println!("{}", url);
+    let resp: LodestoneCharacterIdResult = client.get(&url)
         .send()?.json()?;
-    Ok(resp.character)
+    let mut character = resp.character;
+    if character.fc_id.is_some() {
+        let fc = fc_by_id(client, character.fc_id.clone().unwrap())?;
+        character.fc = fc;
+    }
+    Ok(character)
+}
+
+pub fn fc_by_id(client: &reqwest::Client, id: String) -> Result<FreeCompany, CommandError> {
+    let url = format!("https://xivapi.com/freecompany/{}", id);
+    println!("{}", url);
+    let resp: LodestoneFCIdResult = client.get(&url)
+        .send()?.json()?;
+    Ok(resp.free_company)
 }
 
 pub fn search_character(client: &reqwest::Client, name: String, server: Option<String>) -> Result<LodestoneSearchResult, CommandError> {
     let server_query = server.map(|s| format!("&server={}", s)).unwrap_or("".to_string());
     let results = client.get(&format!("https://xivapi.com/character/search?name={}{}", name, server_query))
-            .send()?.json()?;
+        .send()?.json()?;
     Ok(results)
 }
 
