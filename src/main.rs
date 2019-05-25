@@ -218,7 +218,7 @@ fn display_character(
                 ),
                 portrait,
             );
-            if char.fc_id.is_some() {
+            if char.free_company_id.is_some() {
                 e.field("Free Company", char.fc.name, portrait);
             }
             e

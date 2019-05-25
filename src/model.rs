@@ -3,10 +3,8 @@ use serde_repr::*;
 use strum_macros::Display;
 
 #[derive(Deserialize, PartialEq, Debug, Clone)]
-#[serde(rename_all = "PascalCase")]
 pub struct RawCharacter {
     pub avatar: String,
-    #[serde(alias = "ID")]
     pub id: usize,
     pub name: String,
     pub server: String,
@@ -21,15 +19,12 @@ pub enum Gender {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct WithIdName {
-    #[serde(alias = "ID")]
     pub id: usize,
     pub name: String,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct ActiveClassJob {
     pub class: WithIdName,
     pub level: usize,
@@ -37,19 +32,16 @@ pub struct ActiveClassJob {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct Character {
     pub active_class_job: ActiveClassJob,
     pub avatar: String,
-    #[serde(rename = "ID")]
     pub id: usize,
     pub guardian_deity: WithIdName,
     pub gender: Gender,
     pub portrait: String,
     pub race: WithIdName,
     pub server: String,
-    #[serde(rename = "FreeCompanyId")]
-    pub fc_id: Option<String>,
+    pub free_company_id: Option<String>,
     pub title: WithIdName,
     pub town: WithIdName,
     pub tribe: WithIdName,
@@ -60,13 +52,11 @@ pub struct Character {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct LodestoneCharacterIdResult {
     pub character: Character,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct Pagination {
     pub results_total: usize,
     pub page: usize,
@@ -76,17 +66,14 @@ pub struct Pagination {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct LodestoneSearchResult<T> {
     pub pagination: Pagination,
     pub results: Vec<T>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct FreeCompany {
     pub name: String,
-    #[serde(rename = "ID")]
     pub id: String,
     pub tag: String,
 }
@@ -102,13 +89,11 @@ impl Default for FreeCompany {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct LodestoneFCIdResult {
     pub free_company: FreeCompany,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct PartyComp {
     pub healers_per_party: usize,
     pub melees_per_party: usize,
@@ -117,9 +102,7 @@ pub struct PartyComp {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct DutyInfo {
-    #[serde(rename = "ID")]
     pub id: usize,
     pub class_job_level_sync: usize,
     pub class_job_level_required: usize,
@@ -131,7 +114,6 @@ pub struct DutyInfo {
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct DutyResult {
     pub content_finder_condition: DutyInfo,
 }

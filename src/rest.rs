@@ -3,18 +3,21 @@ use serenity::framework::standard::CommandError;
 use crate::model::*;
 
 pub fn character_by_id(client: &reqwest::Client, id: usize) -> Result<Character, CommandError> {
-    let url = format!("https://xivapi.com/character/{}?extended=true", id);
+    let url = format!(
+        "https://xivapi.com/character/{}?snake_case=1&extended=1",
+        id
+    );
     println!("{}", url);
     let resp: LodestoneCharacterIdResult = client.get(&url).send()?.json()?;
     let mut character = resp.character;
-    if let Some(ref fc_id) = &character.fc_id {
+    if let Some(ref fc_id) = &character.free_company_id {
         character.fc = fc_by_id(client, fc_id)?;
     }
     Ok(character)
 }
 
 pub fn fc_by_id(client: &reqwest::Client, id: &str) -> Result<FreeCompany, CommandError> {
-    let url = format!("https://xivapi.com/freecompany/{}", id);
+    let url = format!("https://xivapi.com/freecompany/{}?snake_case=1", id);
     println!("{}", url);
     let resp: LodestoneFCIdResult = client.get(&url).send()?.json()?;
     Ok(resp.free_company)
@@ -30,7 +33,7 @@ pub fn search_character(
         .unwrap_or("".to_string());
     let results = client
         .get(&format!(
-            "https://xivapi.com/character/search?name={}{}",
+            "https://xivapi.com/character/search?snake_case=1&name={}{}",
             name, server_query
         ))
         .send()?
@@ -74,14 +77,14 @@ pub fn content_search(
     content_type: &str,
 ) -> Result<LodestoneSearchResult<WithIdName>, CommandError> {
     let url = format!(
-        "https://xivapi.com/search?string={}&indexes={}",
+        "https://xivapi.com/search?snake_case=1&string={}&indexes={}",
         name, content_type
     );
     Ok(client.get(&url).send()?.json()?)
 }
 
 pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, CommandError> {
-    let url = format!("https://xivapi.com/InstanceContent/{}?columns=ContentFinderCondition\
+    let url = format!("https://xivapi.com/InstanceContent/{}?snake_case=1&columns=ContentFinderCondition\
     .ClassJobLevelRequired,ContentFinderCondition.ClassJobLevelSync,ContentFinderCondition\
     .ContentMemberType,ContentFinderCondition.ContentType.ID,ContentFinderCondition.ContentType.Name\
     ,ContentFinderCondition.Name,ContentFinderCondition.ItemLevelRequired,ContentFinderCondition\
