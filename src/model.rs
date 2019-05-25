@@ -70,8 +70,8 @@ pub struct LodestoneCharacterIdResult {
 pub struct Pagination {
     pub results_total: usize,
     pub page: usize,
-    pub page_next: usize,
-    pub page_prev: usize,
+    pub page_next: Option<usize>,
+    pub page_prev: Option<usize>,
     pub page_total: usize,
 }
 
