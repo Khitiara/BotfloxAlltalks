@@ -88,28 +88,27 @@ fn main() {
                 //  Print out an error if it happened
                 if let Err(why) = error {
                     let CommandError(s) = why;
-                    let _ = msg.channel_id.say(&ctx.http, s.clone());
+                    msg.channel_id.say(&ctx.http, s.clone());
                     eprintln!("Error in {}: {:?}", cmd_name, s);
                 }
             })
             .group(&GENERAL_GROUP),
     );
-    let _ = {
+
+    {
         let mut data = client.data.write();
         data.insert::<ReqwestClient>(req);
-    };
+    }
 
     // start listening for events by starting a single shard
     if let Err(why) = client.start() {
         eprintln!("An error occurred while running the client: {:?}", why);
     }
 
-    let _ = {
-        let data = client.data.read();
-        let store = data.get::<Storage>().expect("Storage");
-        println!("Saving storage");
-        save_storage(store).unwrap();
-    };
+    let data = client.data.read();
+    let store = data.get::<Storage>().expect("Storage");
+    println!("Saving storage");
+    save_storage(store).unwrap();
 }
 
 group!({
@@ -122,7 +121,7 @@ group!({
 #[description = "Ping the bot, for testing"]
 #[usage("!ping")]
 fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let _ = msg.channel_id.say(&ctx.http, "Pong!")?;
+    msg.channel_id.say(&ctx.http, "Pong!")?;
     Ok(())
 }
 
@@ -131,8 +130,7 @@ fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
 #[usage("!invite")]
 fn invite(ctx: &mut Context, msg: &Message) -> CommandResult {
     let data = ctx.data.read();
-    let _ = msg
-        .channel_id
+    msg.channel_id
         .say(&ctx.http, data.get::<InviteUrl>().expect("invite url"))?;
     Ok(())
 }
@@ -144,10 +142,9 @@ fn byid(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let id = args.single::<usize>()?;
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
-    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    msg.channel_id.broadcast_typing(&ctx.http)?;
     let char = character_by_id(req, id)?;
-    let _ = msg
-        .channel_id
+    msg.channel_id
         .say(&ctx.http, format!("Found {} @ {}", char.name, char.server))?;
     Ok(())
 }
@@ -156,7 +153,7 @@ fn byid(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
 #[description = "Get a character by name"]
 #[usage("!byname")]
 fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
-    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    msg.channel_id.broadcast_typing(&ctx.http)?;
     let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim();
     let server = arg.get(1).map(|s| s.trim());
@@ -170,7 +167,7 @@ fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
 #[description = "Get a character by name with portrait"]
 #[usage("!portrait")]
 fn portrait(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
-    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    msg.channel_id.broadcast_typing(&ctx.http)?;
     let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim();
     let server = arg.get(1).map(|s| s.trim());
@@ -186,7 +183,7 @@ fn display_character(
     char: Character,
     portrait: bool,
 ) -> CommandResult {
-    let _ = chan.send_message(&ctx.http, |m| {
+    chan.send_message(&ctx.http, |m| {
         m.embed(|e: &mut CreateEmbed| {
             if portrait {
                 e.image(char.portrait);
@@ -245,7 +242,7 @@ fn save(ctx: &mut Context, _msg: &Message) -> CommandResult {
 #[description = "Save character-user linkage"]
 #[usage("!iam")]
 fn iam(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
-    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    msg.channel_id.broadcast_typing(&ctx.http)?;
     let arg: Vec<&str> = args.message().split('@').collect();
     let name = arg[0].trim();
     let server = arg.get(1).map(|s| s.trim());
@@ -266,7 +263,7 @@ fn iam(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
 #[description = "Get your character"]
 #[usage("!whoami")]
 fn whoami(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    msg.channel_id.broadcast_typing(&ctx.http)?;
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let store = data.get::<Storage>().expect("Storage");
@@ -286,7 +283,7 @@ fn whoami(ctx: &mut Context, msg: &Message) -> CommandResult {
 #[description = "Get your character"]
 #[usage("!selfportrait")]
 fn selfportrait(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
+    msg.channel_id.broadcast_typing(&ctx.http)?;
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let store = data.get::<Storage>().expect("Storage");
