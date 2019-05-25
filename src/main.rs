@@ -1,30 +1,21 @@
-extern crate reqwest;
-extern crate serde;
-extern crate serenity;
-#[macro_use]
-extern crate std;
-extern crate strum;
-#[macro_use]
-extern crate strum_macros;
-extern crate typemap;
-
-use serenity::builder::CreateEmbed;
-use serenity::client::{Client, Context};
-use serenity::framework::standard::{Args, CommandError, CommandResult, macros::{command, group}, StandardFramework};
-use serenity::model::channel::Message;
-use serenity::model::gateway::{Activity, Ready};
-use serenity::model::id::ChannelId;
-use serenity::model::Permissions;
-use serenity::prelude::EventHandler;
-
+use crate::{model::Character, store::CharacterId};
 use rest::*;
-use std::env;
-use std::error::Error;
-use std::fs::File;
-use std::path::Path;
-
-use crate::model::Character;
-use crate::store::CharacterId;
+use serenity::{
+    builder::CreateEmbed,
+    client::{Client, Context},
+    framework::standard::{
+        macros::{command, group},
+        Args, CommandError, CommandResult, StandardFramework,
+    },
+    model::{
+        channel::Message,
+        gateway::{Activity, Ready},
+        id::ChannelId,
+        Permissions,
+    },
+    prelude::EventHandler,
+};
+use std::{env, error::Error, fs::File, path::Path};
 
 mod model;
 mod rest;
@@ -60,15 +51,25 @@ fn load_storage() -> Result<store::BotfloxStorage, Box<Error>> {
 }
 
 fn save_storage(storage: &store::BotfloxStorage) -> Result<(), Box<Error>> {
-    Ok(serde_yaml::to_writer(File::create("botflox.yml")?, storage)?)
+    Ok(serde_yaml::to_writer(
+        File::create("botflox.yml")?,
+        storage,
+    )?)
 }
 
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, event: Ready) {
         ctx.set_activity(Activity::playing(" with Idyllshire Cityfriends!"));
         let mut data = ctx.data.write();
-        let url = event.user.invite_url(&ctx.http, Permissions::SEND_MESSAGES
-            | Permissions::ADD_REACTIONS | Permissions::ATTACH_FILES | Permissions::EMBED_LINKS)
+        let url = event
+            .user
+            .invite_url(
+                &ctx.http,
+                Permissions::SEND_MESSAGES
+                    | Permissions::ADD_REACTIONS
+                    | Permissions::ATTACH_FILES
+                    | Permissions::EMBED_LINKS,
+            )
             .unwrap();
         data.insert::<InviteUrl>(url);
         data.insert::<Storage>(load_storage().unwrap());
@@ -78,14 +79,12 @@ impl EventHandler for Handler {
 fn main() {
     // Login with a bot token from the environment
     let token = env::var("DISCORD_TOKEN").expect("token");
-    let mut client = Client::new(&token,
-                                 Handler)
-        .expect("Error creating client");
+    let mut client = Client::new(&token, Handler).expect("Error creating client");
     let req = reqwest::Client::new();
-    client.with_framework(StandardFramework::new()
-        .configure(|c| c.prefix("!"))
-        .after(
-            |ctx, msg, cmd_name, error| {
+    client.with_framework(
+        StandardFramework::new()
+            .configure(|c| c.prefix("!"))
+            .after(|ctx, msg, cmd_name, error| {
                 //  Print out an error if it happened
                 if let Err(why) = error {
                     let CommandError(s) = why;
@@ -93,7 +92,8 @@ fn main() {
                     eprintln!("Error in {}: {:?}", cmd_name, s);
                 }
             })
-        .group(&GENERAL_GROUP));
+            .group(&GENERAL_GROUP),
+    );
     let _ = {
         let mut data = client.data.write();
         data.insert::<ReqwestClient>(req);
@@ -131,7 +131,9 @@ fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
 #[usage("!invite")]
 fn invite(ctx: &mut Context, msg: &Message) -> CommandResult {
     let data = ctx.data.read();
-    let _ = msg.channel_id.say(&ctx.http, data.get::<InviteUrl>().expect("invite url"))?;
+    let _ = msg
+        .channel_id
+        .say(&ctx.http, data.get::<InviteUrl>().expect("invite url"))?;
     Ok(())
 }
 
@@ -144,7 +146,9 @@ fn byid(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let req = data.get::<ReqwestClient>().expect("client");
     let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
     let char = character_by_id(req, id)?;
-    let _ = msg.channel_id.say(&ctx.http, format!("Found {} @ {}", char.name, char.server))?;
+    let _ = msg
+        .channel_id
+        .say(&ctx.http, format!("Found {} @ {}", char.name, char.server))?;
     Ok(())
 }
 
@@ -154,8 +158,8 @@ fn byid(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
 fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
     let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
     let arg: Vec<&str> = args.message().split('@').collect();
-    let name = arg[0].trim().to_string();
-    let server = arg.get(1).map(|s| s.trim().to_string());
+    let name = arg[0].trim();
+    let server = arg.get(1).map(|s| s.trim());
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
@@ -168,30 +172,61 @@ fn byname(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
 fn portrait(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
     let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
     let arg: Vec<&str> = args.message().split('@').collect();
-    let name = arg[0].trim().to_string();
-    let server = arg.get(1).map(|s| s.trim().to_string());
+    let name = arg[0].trim();
+    let server = arg.get(1).map(|s| s.trim());
     let data = ctx.data.read();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = character_by_name(req, name, server)?;
     display_character(ctx, msg.channel_id, char, true)
 }
 
-fn display_character(ctx: &Context, chan: ChannelId, char: Character, portrait: bool) -> CommandResult {
-    let _ = chan.send_message(&ctx.http, |m| m
-        .embed(|e: &mut CreateEmbed| {
+fn display_character(
+    ctx: &Context,
+    chan: ChannelId,
+    char: Character,
+    portrait: bool,
+) -> CommandResult {
+    let _ = chan.send_message(&ctx.http, |m| {
+        m.embed(|e: &mut CreateEmbed| {
             if portrait {
                 e.image(char.portrait);
             } else {
                 e.thumbnail(char.avatar);
             }
-            e.title(format!("{} 🌸 {}{}", char.name, char.server, if !char.title.name.is_empty() { format!(" <{}>", char.title.name) } else { "".to_string() }))
-                .field("Job", format!("Level {} {}", char.active_class_job.level, char.active_class_job.job.name), portrait)
-                .field("Race", format!("{} {} ({})", char.gender.to_string(), char.race.name, char.tribe.name), portrait);
+            e.title(format!(
+                "{} 🌸 {}{}",
+                char.name,
+                char.server,
+                if !char.title.name.is_empty() {
+                    format!(" <{}>", char.title.name)
+                } else {
+                    "".to_string()
+                }
+            ))
+            .field(
+                "Job",
+                format!(
+                    "Level {} {}",
+                    char.active_class_job.level, char.active_class_job.job.name
+                ),
+                portrait,
+            )
+            .field(
+                "Race",
+                format!(
+                    "{} {} ({})",
+                    char.gender.to_string(),
+                    char.race.name,
+                    char.tribe.name
+                ),
+                portrait,
+            );
             if char.fc_id.is_some() {
                 e.field("Free Company", char.fc.name, portrait);
             }
             e
-        }))?;
+        })
+    })?;
     Ok(())
 }
 
@@ -212,15 +247,18 @@ fn save(ctx: &mut Context, _msg: &Message) -> CommandResult {
 fn iam(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
     let _ = msg.channel_id.broadcast_typing(&ctx.http)?;
     let arg: Vec<&str> = args.message().split('@').collect();
-    let name = arg[0].trim().to_string();
-    let server = arg.get(1).map(|s| s.trim().to_string());
+    let name = arg[0].trim();
+    let server = arg.get(1).map(|s| s.trim());
     let mut data = ctx.data.write();
     let req = data.get::<ReqwestClient>().expect("client");
     let char = id_by_name(req, name, server)?;
     let store = data.get_mut::<Storage>().expect("Storage");
     store.listings.insert(msg.author.id, CharacterId(char.id));
     save_storage(store)?;
-    msg.reply(ctx, format!("you are now known to be {}", char.name).as_str())?;
+    msg.reply(
+        ctx,
+        format!("you are now known to be {}", char.name).as_str(),
+    )?;
     Ok(())
 }
 

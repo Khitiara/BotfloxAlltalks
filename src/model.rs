@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use serde_repr::*;
+use strum_macros::Display;
 
 #[derive(Deserialize, PartialEq, Debug, Clone)]
 #[serde(rename_all = "PascalCase")]
@@ -32,7 +33,7 @@ pub struct WithIdName {
 pub struct ActiveClassJob {
     pub class: WithIdName,
     pub level: usize,
-    pub job: WithIdName
+    pub job: WithIdName,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -55,13 +56,13 @@ pub struct Character {
     pub nameday: String,
     pub name: String,
     #[serde(skip_deserializing)]
-    pub fc: FreeCompany
+    pub fc: FreeCompany,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct LodestoneCharacterIdResult {
-    pub character: Character
+    pub character: Character,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -71,7 +72,7 @@ pub struct Pagination {
     pub page: usize,
     pub page_next: usize,
     pub page_prev: usize,
-    pub page_total: usize
+    pub page_total: usize,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -87,7 +88,7 @@ pub struct FreeCompany {
     pub name: String,
     #[serde(rename = "ID")]
     pub id: String,
-    pub tag: String
+    pub tag: String,
 }
 
 impl Default for FreeCompany {
@@ -95,7 +96,7 @@ impl Default for FreeCompany {
         FreeCompany {
             name: "".to_string(),
             id: "".to_string(),
-            tag: "".to_string()
+            tag: "".to_string(),
         }
     }
 }
@@ -103,7 +104,7 @@ impl Default for FreeCompany {
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct LodestoneFCIdResult {
-    pub free_company: FreeCompany
+    pub free_company: FreeCompany,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -126,11 +127,11 @@ pub struct DutyInfo {
     pub itel_level_required: usize,
     pub content_type: WithIdName,
     pub content_member_type: PartyComp,
-    pub name: String
+    pub name: String,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct DutyResult {
-    pub content_finder_condition: DutyInfo
+    pub content_finder_condition: DutyInfo,
 }

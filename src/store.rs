@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use serde::{Deserialize, Serialize};
 use serenity::model::id::UserId;
-use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CharacterId(pub usize);
@@ -15,7 +15,7 @@ pub struct BotfloxStorage {
 impl BotfloxStorage {
     pub fn new() -> BotfloxStorage {
         BotfloxStorage {
-            listings: CharacterListings::new()
+            listings: CharacterListings::new(),
         }
     }
 }
