@@ -47,6 +47,11 @@ pub fn id_by_name(client: &reqwest::Client, name: String, server: Option<String>
     }
 }
 
+pub fn content_search(client: &reqwest::Client, name: String, content_type: &str) -> Result<LodestoneSearchResult<WithIdName>, CommandError> {
+    let url = format!("https://xivapi.com/search?string={}&indexes={}", name, content_type);
+    Ok(client.get(&url).send()?.json()?)
+}
+
 pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, CommandError> {
     let url = format!("https://xivapi.com/InstanceContent/{}?columns=ContentFinderCondition\
     .ClassJobLevelRequired,ContentFinderCondition.ClassJobLevelSync,ContentFinderCondition\
@@ -55,4 +60,15 @@ pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, Comma
     .ItemLevelSync,ContentFinderCondition.ID", id);
     let resp: DutyResult = client.get(&url).send()?.json()?;
     Ok(resp.content_finder_condition)
+}
+
+pub fn duty_by_name(client: &reqwest::Client, name: String) -> Result<DutyInfo, CommandError> {
+    let search = content_search(client, name, "InstanceContent")?;
+    if search.pagination.results_total > 1 {
+        Err(CommandError(format!("Search not specific enough, found {} matching results", search.pagination.results_total)))
+    } else if search.results.is_empty() {
+        Err(CommandError("No matching character found, try again!".to_string()))
+    } else {
+        duty_by_id(client, search.results.first().expect("duty").id)
+    }
 }
