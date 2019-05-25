@@ -67,14 +67,18 @@ pub struct LodestoneCharacterIdResult {
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct Pagination {
-    pub results_total: usize
+    pub results_total: usize,
+    pub page: usize,
+    pub page_next: usize,
+    pub page_prev: usize,
+    pub page_total: usize
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
 #[serde(rename_all = "PascalCase")]
-pub struct LodestoneSearchResult {
+pub struct LodestoneSearchResult<T> {
     pub pagination: Pagination,
-    pub results: Vec<RawCharacter>,
+    pub results: Vec<T>,
 }
 
 #[derive(Deserialize, PartialEq, Debug)]
@@ -100,4 +104,33 @@ impl Default for FreeCompany {
 #[serde(rename_all = "PascalCase")]
 pub struct LodestoneFCIdResult {
     pub free_company: FreeCompany
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct PartyComp {
+    pub healers_per_party: usize,
+    pub melees_per_party: usize,
+    pub ranged_per_party: usize,
+    pub tanks_per_party: usize,
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct DutyInfo {
+    #[serde(rename = "ID")]
+    pub id: usize,
+    pub class_job_level_sync: usize,
+    pub class_job_level_required: usize,
+    pub item_level_sync: usize,
+    pub itel_level_required: usize,
+    pub content_type: WithIdName,
+    pub content_member_type: PartyComp,
+    pub name: String
+}
+
+#[derive(Deserialize, PartialEq, Debug)]
+#[serde(rename_all = "PascalCase")]
+pub struct DutyResult {
+    pub content_finder_condition: DutyInfo
 }

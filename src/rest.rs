@@ -23,7 +23,7 @@ pub fn fc_by_id(client: &reqwest::Client, id: String) -> Result<FreeCompany, Com
     Ok(resp.free_company)
 }
 
-pub fn search_character(client: &reqwest::Client, name: String, server: Option<String>) -> Result<LodestoneSearchResult, CommandError> {
+pub fn search_character(client: &reqwest::Client, name: String, server: Option<String>) -> Result<LodestoneSearchResult<RawCharacter>, CommandError> {
     let server_query = server.map(|s| format!("&server={}", s)).unwrap_or("".to_string());
     let results = client.get(&format!("https://xivapi.com/character/search?name={}{}", name, server_query))
         .send()?.json()?;
@@ -45,4 +45,14 @@ pub fn id_by_name(client: &reqwest::Client, name: String, server: Option<String>
         let raw_char = search.results.first().expect("character");
         Ok(raw_char.clone())
     }
+}
+
+pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, CommandError> {
+    let url = format!("https://xivapi.com/InstanceContent/{}?columns=ContentFinderCondition\
+    .ClassJobLevelRequired,ContentFinderCondition.ClassJobLevelSync,ContentFinderCondition\
+    .ContentMemberType,ContentFinderCondition.ContentType.ID,ContentFinderCondition.ContentType.Name\
+    ,ContentFinderCondition.Name,ContentFinderCondition.ItemLevelRequired,ContentFinderCondition\
+    .ItemLevelSync,ContentFinderCondition.ID", id);
+    let resp: DutyResult = client.get(&url).send()?.json()?;
+    Ok(resp.content_finder_condition)
 }
