@@ -5,15 +5,13 @@ authors = ["RoboSky <robotbrainify@github.com>", "ash lea <ashlea@protonmail.com
 edition = "2018"
 
 [dependencies]
-serenity = "0.6.0-rc.1"
 reqwest = "0.9"
-
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_repr = "0.1"
 serde_yaml = "0.8.9"
-
-typemap = "0.3"
-
+serenity = "0.6.0-rc.1"
+signal-hook = "0.1.9"
 strum = "0.15.0"
 strum_macros = "0.15.0"
+typemap = "0.3"

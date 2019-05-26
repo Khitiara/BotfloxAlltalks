@@ -15,7 +15,8 @@ use serenity::{
     },
     prelude::EventHandler,
 };
-use std::{env, error::Error, fs::File, path::Path};
+use signal_hook;
+use std::{env, error::Error, fs::File, path::Path, sync::Arc};
 
 mod model;
 mod rest;
@@ -88,12 +89,24 @@ fn main() {
                 //  Print out an error if it happened
                 if let Err(why) = error {
                     let CommandError(s) = why;
-                    msg.channel_id.say(&ctx.http, s.clone());
+                    msg.channel_id.say(&ctx.http, s.clone()).unwrap();
                     eprintln!("Error in {}: {:?}", cmd_name, s);
                 }
             })
             .group(&GENERAL_GROUP),
     );
+
+    let shard_manager = Arc::clone(&client.shard_manager);
+    unsafe {
+        signal_hook::register(signal_hook::SIGINT, move || {
+            println!("Caught SIGINT, shutting down...");
+            shard_manager.lock().shutdown_all();
+
+            // Wait a reasonable amount of time to make sure the shards are disconnected
+            std::thread::sleep(std::time::Duration::from_secs(1));
+        })
+        .unwrap();
+    }
 
     {
         let mut data = client.data.write();
