@@ -18,28 +18,3 @@ pub trait XIVApiObject: DeserializeOwned {
         )
     }
 }
-
-pub trait XIVGameContentObject {
-    fn index() -> &'static str;
-    fn columns() -> &'static str;
-    fn extra_params() -> Option<&'static str>;
-}
-
-impl<'de, T> XIVApiObject for T
-where
-    T: XIVGameContentObject + DeserializeOwned,
-{
-    type Id = usize;
-
-    fn endpoint(id: usize) -> String {
-        format!("/{}/{}", T::index(), id)
-    }
-
-    fn columns() -> &'static str {
-        T::columns()
-    }
-
-    fn extra_params() -> Option<&'static str> {
-        T::extra_params()
-    }
-}
