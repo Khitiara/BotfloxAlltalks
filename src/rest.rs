@@ -72,39 +72,39 @@ pub fn id_by_name(
     }
 }
 
-pub fn content_search<T: XIVApiObject>(
-    client: &reqwest::Client,
-    search: T::Search,
-) -> Result<LodestoneSearchResult<T::SearchResult>, CommandError> {
-    Ok(client.get(&T::search_url(search)).send()?.json()?)
-}
+//pub fn content_search<T: XIVApiObject>(
+//    client: &reqwest::Client,
+//    search: T::Search,
+//) -> Result<LodestoneSearchResult<T::SearchResult>, CommandError> {
+//    Ok(client.get(&T::search_url(search)).send()?.json()?)
+//}
 
 pub fn content_by_id<T: XIVApiObject>(
     client: &reqwest::Client,
     id: T::Id,
-) -> Result<T::IdResult, CommandError> {
+) -> Result<T, CommandError> {
     Ok(client.get(T::id_url(id).as_str()).send()?.json()?)
 }
 
-pub fn content_search_one<T: XIVApiObject>(
-    client: &reqwest::Client,
-    search: T::Search,
-) -> Result<T::IdResult, CommandError> {
-    let search = content_search::<T>(client, search)?;
-    if search.pagination.results_total > 1 {
-        Err(CommandError(format!(
-            "Search not specific enough, found {} matching results",
-            search.pagination.results_total
-        )))
-    } else if search.results.is_empty() {
-        Err(CommandError(
-            "No matching item found, try again!".to_string(),
-        ))
-    } else {
-        let id = T::id_from_search_result(search.results.first().expect("item"));
-        content_by_id::<T>(client, id)
-    }
-}
+//pub fn content_search_one<T: XIVApiObject>(
+//    client: &reqwest::Client,
+//    search: T::Search,
+//) -> Result<T::IdResult, CommandError> {
+//    let search = content_search::<T>(client, search)?;
+//    if search.pagination.results_total > 1 {
+//        Err(CommandError(format!(
+//            "Search not specific enough, found {} matching results",
+//            search.pagination.results_total
+//        )))
+//    } else if search.results.is_empty() {
+//        Err(CommandError(
+//            "No matching item found, try again!".to_string(),
+//        ))
+//    } else {
+//        let id = T::id_from_search_result(search.results.first().expect("item"));
+//        content_by_id::<T>(client, id)
+//    }
+//}
 
 //pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, CommandError> {
 //    let url = format!("https://xivapi.com/InstanceContent/{}?snake_case=1&columns=ContentFinderCondition\
