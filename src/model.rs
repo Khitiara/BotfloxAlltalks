@@ -2,6 +2,8 @@ use serde::Deserialize;
 use serde_repr::*;
 use strum_macros::Display;
 
+use crate::generic::XIVApiObject;
+
 #[derive(Deserialize, PartialEq, Debug, Clone)]
 pub struct RawCharacter {
     pub avatar: String,
@@ -56,6 +58,17 @@ pub struct LodestoneCharacterIdResult {
     pub character: Character,
 }
 
+impl XIVApiObject for LodestoneCharacterIdResult {
+    type Id = usize;
+
+    fn id_url(s: Self::Id) -> String {
+        format!("https://xivapi.net/character/{}?snake_case=1&columns=Character.ActiveClassJob,\
+        Character.Avatar,Character.ID,Character.GuardianDiety,Character.Gender,Character.Portrait,\
+        Character.Race,Character.Server,Character.FreeCompanyID,Character.Title,Character.Town\
+        Character.Tribe,Character.Nameday,Character.Name&extended=1", s)
+    }
+}
+
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct Pagination {
     pub results_total: usize,
@@ -93,6 +106,18 @@ pub struct LodestoneFCIdResult {
     pub free_company: FreeCompany,
 }
 
+impl XIVApiObject for LodestoneFCIdResult {
+    type Id = String;
+
+    fn id_url(s: Self::Id) -> String {
+        format!(
+            "https://xivapi.net/freecompany/{}?snake_case=1&columns=FreeCompany.Name,\
+             FreeCompany.ID,FreeCompany.TAG",
+            s
+        )
+    }
+}
+
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct PartyComp {
     pub healers_per_party: usize,
@@ -116,4 +141,16 @@ pub struct DutyInfo {
 #[derive(Deserialize, PartialEq, Debug)]
 pub struct DutyResult {
     pub content_finder_condition: DutyInfo,
+}
+
+impl XIVApiObject for DutyResult {
+    type Id = usize;
+
+    fn id_url(s: Self::Id) -> String {
+        format!("https://xivapi.net/InstanceContent/{}?snake_case=1&columns=ContentFinderCondition\
+//    .ClassJobLevelRequired,ContentFinderCondition.ClassJobLevelSync,ContentFinderCondition\
+//    .ContentMemberType,ContentFinderCondition.ContentType.ID,ContentFinderCondition.ContentType.Name\
+//    ,ContentFinderCondition.Name,ContentFinderCondition.ItemLevelRequired,ContentFinderCondition\
+//    .ItemLevelSync,ContentFinderCondition.ID", s)
+    }
 }
