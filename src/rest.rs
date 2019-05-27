@@ -1,5 +1,6 @@
 use serenity::framework::standard::CommandError;
 
+use crate::generic::*;
 use crate::model::*;
 
 pub fn character_by_id(client: &reqwest::Client, id: usize) -> Result<Character, CommandError> {
@@ -71,30 +72,25 @@ pub fn id_by_name(
     }
 }
 
-pub fn content_search(
+pub fn content_search<T: XIVApiObject>(
     client: &reqwest::Client,
-    name: &str,
-    content_type: &str,
-) -> Result<LodestoneSearchResult<WithIdName>, CommandError> {
-    let url = format!(
-        "https://xivapi.com/search?snake_case=1&string={}&indexes={}",
-        name, content_type
-    );
-    Ok(client.get(&url).send()?.json()?)
+    search: T::Search,
+) -> Result<LodestoneSearchResult<T::SearchResult>, CommandError> {
+    Ok(client.get(&T::search_url(search)).send()?.json()?)
 }
 
-pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, CommandError> {
-    let url = format!("https://xivapi.com/InstanceContent/{}?snake_case=1&columns=ContentFinderCondition\
-    .ClassJobLevelRequired,ContentFinderCondition.ClassJobLevelSync,ContentFinderCondition\
-    .ContentMemberType,ContentFinderCondition.ContentType.ID,ContentFinderCondition.ContentType.Name\
-    ,ContentFinderCondition.Name,ContentFinderCondition.ItemLevelRequired,ContentFinderCondition\
-    .ItemLevelSync,ContentFinderCondition.ID", id);
-    let resp: DutyResult = client.get(&url).send()?.json()?;
-    Ok(resp.content_finder_condition)
+pub fn content_by_id<T: XIVApiObject>(
+    client: &reqwest::Client,
+    id: T::Id,
+) -> Result<T::IdResult, CommandError> {
+    Ok(client.get(T::id_url(id).as_str()).send()?.json()?)
 }
 
-pub fn duty_by_name(client: &reqwest::Client, name: &str) -> Result<DutyInfo, CommandError> {
-    let search = content_search(client, name, "InstanceContent")?;
+pub fn content_search_one<T: XIVApiObject>(
+    client: &reqwest::Client,
+    search: T::Search,
+) -> Result<T::IdResult, CommandError> {
+    let search = content_search::<T>(client, search)?;
     if search.pagination.results_total > 1 {
         Err(CommandError(format!(
             "Search not specific enough, found {} matching results",
@@ -102,9 +98,20 @@ pub fn duty_by_name(client: &reqwest::Client, name: &str) -> Result<DutyInfo, Co
         )))
     } else if search.results.is_empty() {
         Err(CommandError(
-            "No matching character found, try again!".to_string(),
+            "No matching item found, try again!".to_string(),
         ))
     } else {
-        duty_by_id(client, search.results.first().expect("duty").id)
+        let id = T::id_from_search_result(search.results.first().expect("item"));
+        content_by_id::<T>(client, id)
     }
 }
+
+//pub fn duty_by_id(client: &reqwest::Client, id: usize) -> Result<DutyInfo, CommandError> {
+//    let url = format!("https://xivapi.com/InstanceContent/{}?snake_case=1&columns=ContentFinderCondition\
+//    .ClassJobLevelRequired,ContentFinderCondition.ClassJobLevelSync,ContentFinderCondition\
+//    .ContentMemberType,ContentFinderCondition.ContentType.ID,ContentFinderCondition.ContentType.Name\
+//    ,ContentFinderCondition.Name,ContentFinderCondition.ItemLevelRequired,ContentFinderCondition\
+//    .ItemLevelSync,ContentFinderCondition.ID", id);
+//    let resp: DutyResult = client.get(&url).send()?.json()?;
+//    Ok(resp.content_finder_condition)
+//}

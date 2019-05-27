@@ -18,6 +18,7 @@ use serenity::{
 };
 use std::{env, error::Error, fs::File, path::Path, sync::Arc};
 
+mod generic;
 mod model;
 mod rest;
 mod store;
