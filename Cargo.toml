@@ -11,7 +11,7 @@ serde_json = "1.0"
 serde_repr = "0.1"
 serde_yaml = "0.8.9"
 serenity = "0.6.0-rc.1"
-signal-hook = "0.1.9"
+ctrlc = { version = "3.1.2", features = ["termination"] }
 strum = "0.15.0"
 strum_macros = "0.15.0"
 typemap = "0.3"

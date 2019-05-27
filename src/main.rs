@@ -1,4 +1,5 @@
 use crate::{model::Character, store::CharacterId};
+use ctrlc;
 use rest::*;
 use serenity::{
     builder::CreateEmbed,
@@ -15,7 +16,6 @@ use serenity::{
     },
     prelude::EventHandler,
 };
-use signal_hook;
 use std::{env, error::Error, fs::File, path::Path, sync::Arc};
 
 mod model;
@@ -97,16 +97,14 @@ fn main() {
     );
 
     let shard_manager = Arc::clone(&client.shard_manager);
-    unsafe {
-        signal_hook::register(signal_hook::SIGINT, move || {
-            println!("Caught SIGINT, shutting down...");
-            shard_manager.lock().shutdown_all();
+    ctrlc::set_handler(move || {
+        println!("Caught SIGINT, shutting down...");
+        shard_manager.lock().shutdown_all();
 
-            // Wait a reasonable amount of time to make sure the shards are disconnected
-            std::thread::sleep(std::time::Duration::from_secs(1));
-        })
-        .unwrap();
-    }
+        // Wait a reasonable amount of time to make sure the shards are disconnected
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    })
+    .expect("Error setting ctrlc handler");
 
     {
         let mut data = client.data.write();
